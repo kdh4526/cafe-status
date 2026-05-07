@@ -12,33 +12,36 @@ import {
 import { db } from "../lib/firebase";
 
 export default function Home() {
+
   const [status, setStatus] = useState("불러오는 중...");
   const [emoji, setEmoji] = useState("⏳");
-  const [views, setViews] = useState(0);
   const [updatedAt, setUpdatedAt] = useState("");
 
   useEffect(() => {
 
-    // 카페 상태 문서
     const cafeRef = doc(db, "cafes", "main");
-
-    // 방문자 수 문서
     const viewsRef = doc(db, "stats", "views");
 
-    // 방문자 수 증가
+    // 방문자 증가
     const increaseViews = async () => {
+
       try {
+
         await updateDoc(viewsRef, {
-          count: increment(1),
+          todayCount: increment(1),
+          totalCount: increment(1),
         });
+
       } catch (error) {
+
         console.log(error);
+
       }
     };
 
     increaseViews();
 
-    // 카페 상태 실시간 감지
+    // 카페 상태 실시간
     const unsubscribeCafe = onSnapshot(cafeRef, (snapshot) => {
 
       const data = snapshot.data();
@@ -65,20 +68,8 @@ export default function Home() {
       }
     });
 
-    // 방문자 수 실시간 감지
-    const unsubscribeViews = onSnapshot(viewsRef, (snapshot) => {
-
-      const data = snapshot.data();
-
-      if (data) {
-        setViews(data.count ?? 0);
-      }
-
-    });
-
     return () => {
       unsubscribeCafe();
-      unsubscribeViews();
     };
 
   }, []);
@@ -104,16 +95,8 @@ export default function Home() {
           마지막 업데이트
         </div>
 
-        <div className="text-sm mb-6">
+        <div className="text-sm">
           {updatedAt}
-        </div>
-
-        <div className="text-gray-500 text-sm mb-1">
-          방문자 수
-        </div>
-
-        <div className="text-2xl font-bold">
-          {views}
         </div>
 
       </div>
