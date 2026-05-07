@@ -1,6 +1,6 @@
 "use client";
 
-import { doc, setDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 
 export default function AdminPage() {
@@ -9,19 +9,16 @@ export default function AdminPage() {
     status: string,
     emoji: string
   ) => {
+
     try {
 
-      await setDoc(
-        doc(db, "cafes", "main"),
-        {
-          status: status,
-          emoji: emoji,
-          updatedAt: new Date(),
-        },
-        {
-          merge: true,
-        }
-      );
+      const ref = doc(db, "cafes", "main");
+
+      await updateDoc(ref, {
+        status: status,
+        emoji: emoji,
+        updatedAt: new Date(),
+      });
 
       alert("저장 성공!");
 
