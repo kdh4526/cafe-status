@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import {
   doc,
   onSnapshot,
   updateDoc,
   increment,
-  setDoc,
-  getDoc,
 } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
@@ -21,36 +20,20 @@ export default function Home() {
   useEffect(() => {
     const ref = doc(db, "cafes", "main");
 
-    const setupViews = async () => {
-      const snapshot = await getDoc(ref);
-
-      // views 없으면 생성
-      if (!snapshot.exists()) {
-        await setDoc(ref, {
-          views: 0,
+    // 방문자 수 증가
+    const increaseViews = async () => {
+      try {
+        await updateDoc(ref, {
+          views: increment(1),
         });
+      } catch (error) {
+        console.log(error);
       }
-
-      const data = snapshot.data();
-
-      if (data && data.views === undefined) {
-        await setDoc(
-          ref,
-          {
-            views: 0,
-          },
-          { merge: true }
-        );
-      }
-
-      // 방문자 수 증가
-      await updateDoc(ref, {
-        views: increment(1),
-      });
     };
 
-    setupViews();
+    increaseViews();
 
+    // 실시간 데이터 감지
     const unsubscribe = onSnapshot(ref, (snapshot) => {
       const data = snapshot.data();
 
@@ -79,8 +62,8 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
-      <div className="bg-white p-10 rounded-3xl shadow-xl text-center w-[350px]">
+    <main className="flex min-h-screen items-center justify-center bg-gray-100">
+      <div className="bg-white rounded-3xl shadow-xl p-10 text-center w-[350px]">
 
         <h1 className="text-4xl font-bold mb-8">
           ☕ 현재 카페 상태
@@ -90,11 +73,11 @@ export default function Home() {
           {emoji}
         </div>
 
-        <p className="text-5xl font-bold mb-8">
+        <div className="text-5xl font-bold mb-8">
           {status}
-        </p>
+        </div>
 
-        <div className="text-gray-500 text-sm mb-3">
+        <div className="text-gray-500 text-sm mb-1">
           마지막 업데이트
         </div>
 
@@ -102,7 +85,7 @@ export default function Home() {
           {updatedAt}
         </div>
 
-        <div className="text-gray-500 text-sm">
+        <div className="text-gray-500 text-sm mb-1">
           방문자 수
         </div>
 
