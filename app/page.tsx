@@ -33,14 +33,14 @@ export default function Home() {
 
     increaseViews();
 
-    // 실시간 데이터 감지
+    // 실시간 감지
     const unsubscribe = onSnapshot(ref, (snapshot) => {
       const data = snapshot.data();
 
       if (data) {
         setStatus(data.status || "정보 없음");
         setEmoji(data.emoji || "❓");
-        setViews(data.views || 0);
+        setViews(data.views ?? 0);
 
         if (data.updatedAt) {
           const date = data.updatedAt.toDate();
