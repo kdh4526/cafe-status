@@ -18,13 +18,18 @@ export default function Home() {
   const [updatedAt, setUpdatedAt] = useState("");
 
   useEffect(() => {
-    const ref = doc(db, "cafes", "main");
+
+    // 카페 상태 문서
+    const cafeRef = doc(db, "cafes", "main");
+
+    // 방문자 수 문서
+    const viewsRef = doc(db, "stats", "views");
 
     // 방문자 수 증가
     const increaseViews = async () => {
       try {
-        await updateDoc(ref, {
-          views: increment(1),
+        await updateDoc(viewsRef, {
+          count: increment(1),
         });
       } catch (error) {
         console.log(error);
@@ -33,16 +38,18 @@ export default function Home() {
 
     increaseViews();
 
-    // 실시간 감지
-    const unsubscribe = onSnapshot(ref, (snapshot) => {
+    // 카페 상태 실시간 감지
+    const unsubscribeCafe = onSnapshot(cafeRef, (snapshot) => {
+
       const data = snapshot.data();
 
       if (data) {
+
         setStatus(data.status || "정보 없음");
         setEmoji(data.emoji || "❓");
-        setViews(data.views ?? 0);
 
         if (data.updatedAt) {
+
           const date = data.updatedAt.toDate();
 
           setUpdatedAt(
@@ -58,11 +65,27 @@ export default function Home() {
       }
     });
 
-    return () => unsubscribe();
+    // 방문자 수 실시간 감지
+    const unsubscribeViews = onSnapshot(viewsRef, (snapshot) => {
+
+      const data = snapshot.data();
+
+      if (data) {
+        setViews(data.count ?? 0);
+      }
+
+    });
+
+    return () => {
+      unsubscribeCafe();
+      unsubscribeViews();
+    };
+
   }, []);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-100">
+
       <div className="bg-white rounded-3xl shadow-xl p-10 text-center w-[350px]">
 
         <h1 className="text-4xl font-bold mb-8">
@@ -94,6 +117,7 @@ export default function Home() {
         </div>
 
       </div>
+
     </main>
   );
 }
