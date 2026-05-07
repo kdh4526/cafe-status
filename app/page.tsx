@@ -1,41 +1,62 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "../lib/firebase";
-
 import {
   doc,
-  getDoc,
+  onSnapshot,
   updateDoc,
   increment,
-  onSnapshot,
+  setDoc,
+  getDoc,
 } from "firebase/firestore";
+
+import { db } from "../lib/firebase";
 
 export default function Home() {
   const [status, setStatus] = useState("불러오는 중...");
   const [emoji, setEmoji] = useState("⏳");
-  const [updatedAt, setUpdatedAt] = useState("");
   const [views, setViews] = useState(0);
+  const [updatedAt, setUpdatedAt] = useState("");
 
   useEffect(() => {
     const ref = doc(db, "cafes", "main");
 
-    // 방문자 수 증가
-    const increaseViews = async () => {
+    const setupViews = async () => {
+      const snapshot = await getDoc(ref);
+
+      // views 없으면 생성
+      if (!snapshot.exists()) {
+        await setDoc(ref, {
+          views: 0,
+        });
+      }
+
+      const data = snapshot.data();
+
+      if (data && data.views === undefined) {
+        await setDoc(
+          ref,
+          {
+            views: 0,
+          },
+          { merge: true }
+        );
+      }
+
+      // 방문자 수 증가
       await updateDoc(ref, {
         views: increment(1),
       });
     };
 
-    increaseViews();
+    setupViews();
 
-    // 실시간 감지
     const unsubscribe = onSnapshot(ref, (snapshot) => {
       const data = snapshot.data();
 
       if (data) {
-        setStatus(data.status);
-        setEmoji(data.emoji);
+        setStatus(data.status || "정보 없음");
+        setEmoji(data.emoji || "❓");
         setViews(data.views || 0);
 
         if (data.updatedAt) {
@@ -58,66 +79,37 @@ export default function Home() {
   }, []);
 
   return (
-    <main
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#f5f5f5",
-      }}
-    >
-      <div
-        style={{
-          textAlign: "center",
-          background: "white",
-          padding: "50px",
-          borderRadius: "20px",
-          boxShadow: "0 0 20px rgba(0,0,0,0.1)",
-          width: "320px",
-        }}
-      >
-        <h1>☕ 현재 카페 상태</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
+      <div className="bg-white p-10 rounded-3xl shadow-xl text-center w-[350px]">
 
-        <div
-          style={{
-            fontSize: "80px",
-            marginTop: "20px",
-          }}
-        >
+        <h1 className="text-4xl font-bold mb-8">
+          ☕ 현재 카페 상태
+        </h1>
+
+        <div className="text-8xl mb-4">
           {emoji}
         </div>
 
-        <h2
-          style={{
-            marginTop: "10px",
-            fontSize: "40px",
-          }}
-        >
+        <p className="text-5xl font-bold mb-8">
           {status}
-        </h2>
+        </p>
 
-        <p
-          style={{
-            marginTop: "30px",
-            color: "gray",
-            fontSize: "14px",
-          }}
-        >
+        <div className="text-gray-500 text-sm mb-3">
           마지막 업데이트
-          <br />
-          {updatedAt}
-        </p>
+        </div>
 
-        <p
-          style={{
-            marginTop: "15px",
-            color: "#666",
-            fontSize: "14px",
-          }}
-        >
-          방문자 수: {views}
-        </p>
+        <div className="text-sm mb-6">
+          {updatedAt}
+        </div>
+
+        <div className="text-gray-500 text-sm">
+          방문자 수
+        </div>
+
+        <div className="text-2xl font-bold">
+          {views}
+        </div>
+
       </div>
     </main>
   );
